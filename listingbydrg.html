@@ -1,0 +1,1754 @@
+<!DOCTYPE html>
+
+<html>
+
+    <head>
+
+        <meta charset="utf-8">
+
+        <title>DRG Information</title>
+
+    </head>
+
+    <style>
+
+    </style>
+
+    <body onload="initpage();">
+	<nav id="nav01"></nav>
+	<div align="center">
+
+	<div>
+	<br>
+	<br>
+
+		<b style="font-size:14pt">Search For DRG Name</b>
+
+		<form onSubmit="handleSelectClick();return false;" action="#">
+
+			<input id="search" onKeyUp="handleKeyUp(20);" type="text" name="functioninput" VALUE="" style="font-size:13pt;width:60ex;"><br>
+
+			<select onClick="handleSelectClick();" name="functionselect" id="functionselect" size="20" style="font-size:13pt;width:60ex;"></select>
+
+			<br><input style="font-size:13pt" type="button" onClick="handleKeyUp(9999999);" value="Load All Matches">
+
+			<br><br><div style="font-size:13pt" id="DRGmessage1"></div>
+
+			<br><div style="font-size:13pt" id="DRGmessage2"></div>
+
+			<br><div style="font-size:13pt" id="DRGmessage3"></div>
+
+			<br><div style="font-size:13pt" id="DRGmessage4"></div>
+
+			<br><div style="font-size:13pt" id="DRGmessage5"></div>
+
+			<br><div style="font-size:13pt" id="DRGmessage6"></div>
+
+			<br><div style="font-size:13pt" id="DRGmessage7"></div>
+
+			<br><div style="font-size:13pt" id="DRGmessage8"></div>
+
+		</form>
+
+	</div>
+</div>
+
+            <br/>
+
+        <hr/>   
+
+    <div id="content-pane">
+
+		<b style="font-size:14pt">Calculate Distance of Least Charging for Selected DRG</b>
+
+      <div id="inputs">
+
+	<br><br><label style="font-size:13pt">Origin:</label><input style="font-size:13pt" type="text" name="source" id="source"/>	
+
+	<br><div style="font-size:13pt" id="DRGmessage9"></div>
+
+        <p><button style="font-size:13pt" type="button" onclick="calculateDistances();">Calculate
+
+          Distance</button></p>
+
+	<br><div style="font-size:13pt" id="DRGmessage10"></div>
+
+	<br><div style="font-size:13pt" id="DRGmessage11"></div>
+
+	<br><div style="font-size:13pt" id="DRGmessage12"></div>
+
+      </div>
+
+      <div id="outputDiv"></div>
+
+    </div>
+
+    <div id="map-canvas"></div>
+
+<style>
+html *
+{
+   font-family: Calibri, sans-serif !important;
+}
+
+      html, body {
+
+        height: 100%;
+
+        margin: 0;
+
+        padding: 0;
+
+      }
+
+
+
+      #map-canvas {
+
+        height: 100%;
+
+        width: 50%;
+
+      }
+
+      #content-pane {
+
+        float:right;
+
+        width:48%;
+
+        padding-left: 2%;
+
+      }
+
+      #outputDiv {
+
+        font-size: 13px;
+
+      }
+ul#menu {
+    padding: 0;
+    margin-bottom: 13px;
+    text-align:center;
+}
+
+ul#menu li {
+    display: inline-block;
+    list-style-type: none;
+}
+
+ul#menu li a {
+    background-color: #000000;
+    padding: 10px 20px;
+    text-decoration: none;
+    color: #33cbff;
+    border-radius: 4px 4px 0 0;
+}
+
+ul#menu li a:hover {
+    color: white;
+    background-color: black;
+}
+
+</style>
+
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+
+  <script>
+
+document.getElementById("nav01").innerHTML =
+"<ul id='menu'>" +
+"<li><a href='http://hospitalcharge.weebly.com/'>Home</a></li>" +
+"<li><a href='http://hospitalcharge.weebly.com/files/theme/listingbycost.html'>Listing By Cost</a></li>" +
+"<li><a href='http://hospitalcharge.weebly.com/files/theme/listingbydrg.html'>Listing by DRG</a></li>" +
+"</ul>";
+
+
+
+// This is the function that refreshes the list after a keypress.
+
+// The maximum number to show can be limited to improve performance with
+
+// huge lists (1000s of entries).
+
+// The function clears the list, and then does a linear search through the
+
+// globally defined array and adds the matches back to the list.
+
+
+
+shownArray1 = new Array;
+
+
+
+function handleKeyUp(maxNumToShow)
+
+{
+
+	selectObj = document.forms[0].functionselect;
+
+	textObj = document.forms[0].functioninput;
+
+
+
+		strText = textObj.value;
+
+	var numShown;
+
+	var shownArray = new Array(maxNumToShow);
+
+	re = new RegExp(strText,"gi");
+
+
+
+	ClearOptionsFast('functionselect');
+
+	selectObj = document.forms[0].functionselect;
+
+
+
+	numShown = 0;
+
+	for(i = 0; i < DRGlist.length; i++)
+
+	{
+
+		if(DRGlist[i].search(re) != -1)
+
+		{
+
+			selectObj[numShown] = new Option(DRGlist[i],"");
+
+			
+
+			shownArray[numShown] = new Array (2);
+
+			shownArray[numShown][0] = i;
+
+			shownArray[numShown][1] = DRGlist[i];
+
+			shownArray[numShown][2] = DRGmin[i];
+
+			shownArray[numShown][3] = DRGmax[i];
+
+			shownArray[numShown][4] = DRGavg[i];
+
+			shownArray[numShown][5] = HospitalName[i]; //added
+
+			shownArray[numShown][6] = address[i];	//added		
+
+
+
+			numShown++;
+
+			
+
+			shownArray1 = shownArray;
+
+		}
+
+		if(numShown == maxNumToShow)
+
+		{
+
+			break;
+
+		}
+
+	}
+
+	if(selectObj.length == 1)
+
+	{
+
+		selectObj.options[0].selected = true;
+
+	}
+
+}
+
+
+
+function ClearOptionsFast(id)
+
+{
+
+	var selectObj = document.getElementById(id);
+
+	var selectParentNode = selectObj.parentNode;
+
+	var newSelectObj = selectObj.cloneNode(false); // Make a shallow copy
+
+	selectParentNode.replaceChild(newSelectObj, selectObj);
+
+	return newSelectObj;
+
+}
+
+
+
+
+
+// this function gets the selected value 
+
+// it can be modified to perform whatever action is needed, or nothing
+
+function handleSelectClick()
+
+{
+
+	selectObj = document.forms[0].functionselect;
+
+	textObj = document.forms[0].functioninput;
+
+	if(selectObj.selectedIndex == -1) {
+
+		return;
+
+	}
+
+
+
+	selectedValue = selectObj.options[selectObj.selectedIndex].text;
+
+	//onSubmit.index.value = selectedValue
+
+	document.getElementById("DRGmessage1").textContent = selectedValue;
+
+	//document.getElementById("DRGmessage2").textContent = selectObj.selectedIndex;
+
+	//document.getElementById("DRGmessage3").textContent = shownArray1[selectObj.selectedIndex][0];
+
+	//document.getElementById("DRGmessage7").textContent = shownArray1[selectObj.selectedIndex][1];
+
+	document.getElementById("DRGmessage4").textContent = "The least a hospital reported charging on average for this DRG was: " + shownArray1[selectObj.selectedIndex][2];
+
+	document.getElementById("DRGmessage5").textContent = "The most a hospital reported charging on average for this DRG was: " + shownArray1[selectObj.selectedIndex][3];
+
+	document.getElementById("DRGmessage6").textContent = "Patients with this DRG were charged " + shownArray1[selectObj.selectedIndex][4] + " on average";
+
+	document.getElementById("DRGmessage9").textContent = "Destination: " + shownArray1[selectObj.selectedIndex][5];
+
+}
+
+
+
+function initpage() {
+
+	handleKeyUp(20);
+
+	document.forms[0].functioninput.focus();
+
+}
+
+
+
+	var map;
+
+	var geocoder;
+
+	var bounds = new google.maps.LatLngBounds();
+
+	var markersArray = [];
+
+
+
+	var origin;
+
+	var destination;
+
+
+
+	var destinationIcon = 'https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=D|FF0000|000000';
+
+	var originIcon = 'https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=O|FFFF00|000000';
+
+
+
+	function initialize() {
+
+	  var opts = {
+
+	    center: new google.maps.LatLng(40, 30),
+
+	    zoom: 10
+
+	  };
+
+	  map = new google.maps.Map(document.getElementById('map-canvas'), opts);
+
+	  geocoder = new google.maps.Geocoder();
+
+	}
+
+
+
+	function calculateDistances(destination) {
+
+	origin = document.getElementById('source').value;
+
+	//destination = document.getElementById('dest').value; // needs to be list of hospitals (imported list of text file hospitals)
+
+	//origin = 'Boston, MA';
+
+	destination = shownArray1[selectObj.selectedIndex][6];
+
+	  var service = new google.maps.DistanceMatrixService();
+
+	  service.getDistanceMatrix(
+
+	    {
+
+	      origins: [origin],
+
+	      destinations: [destination],
+
+	      travelMode: google.maps.TravelMode.DRIVING,
+
+	      unitSystem: google.maps.UnitSystem.IMPERIAL,
+
+	      avoidHighways: false,
+
+	      avoidTolls: false
+
+	    }, calcDistance);
+
+	}
+
+
+
+	function calcDistance(response, status) {
+
+	  if (status != google.maps.DistanceMatrixStatus.OK) {
+
+	    alert('Error was: ' + status);
+
+	  } else {
+
+	    var origins = response.originAddresses;
+
+	    var destinations = response.destinationAddresses;
+
+	    deleteOverlays();
+
+
+
+	    for (var i = 0; i < origins.length; i++) {
+
+	      var results = response.rows[i].elements;
+
+	      addMarker(origins[i], false);
+
+	      for (var j = 0; j < results.length; j++) {
+
+		addMarker(destinations[j], true);
+
+		document.getElementById("DRGmessage10").textContent = origins[i] + ' to ' + destinations[j] + ': ';
+
+		document.getElementById("DRGmessage11").textContent = "Distance: " + results[j].distance.text;
+
+		document.getElementById("DRGmessage12").textContent = "Duration: " + results[j].duration.text;
+
+	      }
+
+	    }
+
+	  }
+
+	}
+
+
+
+	function addMarker(location, isDestination) {
+
+	  var icon;
+
+	  if (isDestination) {
+
+	    icon = destinationIcon;
+
+	  } else {
+
+	    icon = originIcon;
+
+	  }
+
+	  geocoder.geocode({'address': location}, function(results, status) {
+
+	    if (status == google.maps.GeocoderStatus.OK) {
+
+	      bounds.extend(results[0].geometry.location);
+
+	      map.fitBounds(bounds);
+
+	      var marker = new google.maps.Marker({
+
+		map: map,
+
+		position: results[0].geometry.location,
+
+		icon: icon
+
+	      });
+
+	      markersArray.push(marker);
+
+	    } else {
+
+	      alert('Geocode was not successful for the following reason: '
+
+		+ status);
+
+	    }
+
+	  });
+
+	}
+
+
+
+	function deleteOverlays() {
+
+	  for (var i = 0; i < markersArray.length; i++) {
+
+	    markersArray[i].setMap(null);
+
+	  }
+
+	  markersArray = [];
+
+	}
+
+	google.maps.event.addDomListener(window, 'load', initialize);
+
+
+
+var HospitalName = Array(
+
+	"Upper Chesapeake Medical Center",
+
+	"Winchester Hospital",
+
+	"Uniontown Hospital",
+
+	"Jackson Medical Center",
+
+	"Atlantic General Hospital",
+
+	"Memorial Hospital of Stilwell",
+
+	"Fort Washington Hospital",
+
+	"Shady Grove Adventist Hospital",
+
+	"Memorial Hospital of Stilwell",
+
+	"Wooster Community Hospital",
+
+	"John Ed Chambers Memorial Hospital, Inc.",
+
+	"Lake Whitney Medical Center",
+
+	"Central Texas Hospital",
+
+	"Lake Whitney Medical Center",
+
+	"Yalobusha General Hospital",
+
+	"Lake Whitney Medical Center",
+
+	"Faith Community Hospital",
+
+	"Yalobusha General Hospital",
+
+	"Lake Martin Community Hospital",
+
+	"Sharkey Issaquena Community Hospital",
+
+	"Georgiana Hospital",
+
+	"St. James Mercy Hospital",
+
+	"TLC Health Network",
+
+	"Anne Arundel Medical Center",
+
+	"Uniontown Hospital",
+
+	"Peninsula Regional Medical Center",
+
+	"Saint Agnes Hospital",
+
+	"Washington Adventist Hospital",
+
+	"Peninsula Regional Medical Center",
+
+	"St. Joseph Mercy Oakland",
+
+	"Winchester Hospital",
+
+	"Anne Arundel Medical Center",
+
+	"Carteret General Hospital",
+
+	"Huron Medical Center",
+
+	"Atlantic General Hospital",
+
+	"Bryan W. Whitfield Memorial Hospital, Inc.",
+
+	"Baltimore Washington Medical Center",
+
+	"Peninsula Regional Medical Center",
+
+	"Greenbrier Valley Medical Center",
+
+	"Yalobusha General Hospital",
+
+	"John Ed Chambers Memorial Hospital",
+
+	"Atlantic General Hospital",
+
+	"Hardin Memorial Hospital",
+
+	"Atlantic General Hospital",
+
+	"John Ed Chambers Memorial Hospital",
+
+	"Clinton Memorial Hospital",
+
+	"John Ed Chambers Memorial Hospital",
+
+	"Green Clinic Surgical Hospital",
+
+	"Greene County Hospital",
+
+	"Lake Whitney Medical Center",
+
+	"Saint Mary's Hospital",
+
+	"Princeton Community Hospital",
+
+	"Civista Medical Center",
+
+	"Morton Hospital",
+
+	"John Ed Chambers Memorial Hospital",
+
+	"Saint Mary's Hospital",
+
+	"John Ed Chambers Memorial Hospital",
+
+	"Saint Mary's Hospital",
+
+	"Fort Washington Hospital",
+
+	"Emory Eastside Medical Center",
+
+	"Peninsula Regional Medical Center",
+
+	"East Carroll Parish Hospital",
+
+	"Upper Chesapeake Medical Center",
+
+	"Anne Arundel Medical Center",
+
+	"Gallup Indian Medical Center",
+
+	"Wooster Community Hospital",
+
+	"Inland Hospital",
+
+	"Crystal Clinic Orthopaedic Center",
+
+	"Chickasaw Nation Medical Center",
+
+	"Frederick Memorial Hospital",
+
+	"Baltimore Washington Medical Center",
+
+	"Crystal Clinic Orthopaedic Center",
+
+	"Anne Arundel Medical Center",
+
+	"Martha Jefferson Hospital",
+
+	"Wooster Community Hospital",
+
+	"Lake Whitney Medical Center",
+
+	"St Bernard's Medical Center",
+
+	"University of Maryland Medical Center",
+
+	"Sharkey Issaquena Community Hospital",
+
+	"American Legion Hospital",
+
+	"Calvert Memorial Hospital",
+
+	"Community General Hospital",
+
+	"Abbeville General Hospital",
+
+	"Masonic Home and Hospital",
+
+	"Shamokin Area Community Hospital",
+
+	"Wyoming County Community Hospital",
+
+	"Yalobusha General Hospital",
+
+	"Decatur General Hospital",
+
+	"Mercy Medical Center",
+
+	"Mercy Medical Center, Inc.",
+
+	"W W Hastings Indian Hospital",
+
+	"Frederick Memorial Hospital",
+
+	"Bronx-Lebanon Hospital Center",
+
+	"Memorial Hospital of Stilwell",
+
+	"Wyoming County Community Hospital",
+
+	"Lake Whitney Medical Center",
+
+	"Elmore Community Hospital",
+
+	"Memorial Hospital and Health Care Center",
+
+	"Union Hospital",
+
+	"John Ed Chambers Memorial Hospital, Inc.");
+
+
+
+var address = Array("500 Upper Chesapeake Drive, Bel Air, MD",
+
+	"41 Highland Avenue, Winchester, MA",
+
+	"500 West Berkeley Street, Uniontown, PA",
+
+	"220 Hospital Drive, Jackson, AL",
+
+	"9733 Healthway Drive, Berlin, MD",
+
+	"1401 West Locust, Stilwell, OK",
+
+	"11711 Livingston Road, Fort Washington, MD",
+
+	"9901 Medical Ctr Drive, Rockville, MD",
+
+	"1401 West Locust, Stilwell, OK",
+
+	"1761 Beall Avenue, Wooster, OH",
+
+	"Highway 10 at Detroit Street, Danville, AR",
+
+	"200 N San Jacinto Street, Whitney, TX",
+
+	"806 N Crockett, Cameron, TX",
+
+	"200 N San Jacinto Street, Whitney, TX",
+
+	"630 South Main Street, Water Valley, MS",
+
+	"200 N San Jacinto Street, Whitney, TX",
+
+	"717 Magnolia Street, Jacksboro, TX",
+
+	"630 South Main Street, Water Valley, MS",
+
+	"201 Mariarden Road, Dadeville, AL",
+
+	"47 South 4 Street, Rolling Fork, MS",
+
+	"515 Miranda Street, Georgiana, AL",
+
+	"411 Canisteo Street, Hornell, NY",
+
+	"100 Memorial Drive, Gowanda, NY",
+
+	"2001 Medical Parkway, Annapolis, MD",
+
+	"500 West Berkeley Street, Uniontown, PA",
+
+	"100 E Carroll Ave, Salisbury, MD",
+
+	"Wilkens and Caton Avenues, Baltimore, MD",
+
+	"7600 Carroll Ave, Takoma Park, MD",
+
+	"100 E Carroll Ave, Salisbury, MD",
+
+	"44405 Woodward Ave, Pontiac, MI",
+
+	"41 Highland Avenue, Winchester, MA",
+
+	"2001 Medical Parkway, Annapolis, MD",
+
+	"3500 Arendell Street, Morehead City, NC",
+
+	"1100 South Van Dyke Road, Bad Axe, MI",
+
+	"9733 Healthway Drive, Berlin, MD",
+
+	"105 Highway 80 East, Demopolis, AL",
+
+	"301 Hospital Drive, Glen Burnie, MD",
+
+	"100 E Carroll Ave, Salisbury, MD",
+
+	"202 Maplewood Avenue, P.O. Box 497, Ronceverte, WV",
+
+	"630 South Main Street, Water Valley, MS",
+
+	"Highway 10 at Detroit Street, Danville, AR",
+
+	"9733 Healthway Drive, Berlin, MD",
+
+	"913 North Dixie Avenue, Elizabethtown, KY",
+
+	"9733 Healthway Drive, Berlin, MD",
+
+	"Highway 10 at Detroit Street, Danville, AR",
+
+	"610 West Main Street, Wilmington, OH",
+
+	"Highway 10 at Detroit Street, Danville, AR",
+
+	"1118 Farmerville Street, Ruston, LA",
+
+	"509 Wilson Avenue, Eutaw, AL",
+
+	"200 N San Jacinto Street, Whitney, TX",
+
+	"Saint Mary's Hospital, P.O. Box 527, Leonardtown, MD",
+
+	"122 12th Street, Princeton, WV",
+
+	"5 Garrett Avenue, La Plata, MD",
+
+	"88 Washington Street, Taunton, MA",
+
+	"Highway 10 at Detroit Street, Danville, AR",
+
+	"Saint Mary's Hospital, P.O. Box 527, Leonardtown, MD",
+
+	"Highway 10 at Detroit Street, Danville, AR",
+
+	"Saint Mary's Hospital, P.O. Box 527, Leonardtown, MD",
+
+	"11711 Livingston Road, Fort Washington, MD",
+
+	"1700 Medical Way, Snellvile, GA",
+
+	"100 E Carroll Ave, Salisbury, MD",
+
+	"336 North Hood Street, Lake Providence, LA",
+
+	"500 Upper Chesapeake Drive, Bel Air, MD",
+
+	"2001 Medical Parkway, Annapolis, MD",
+
+	"516 E Nizhoni Blvd, Gallup, NM",
+
+	"1761 Beall Avenue, Wooster, OH",
+
+	"200 Kennedy Memorial Drive, Waterville, ME",
+
+	"444 North Main Street, Akron, OH",
+
+	"1921 Stonecipher Boulevard, Ada, OK",
+
+	"400 West Seventh Street, Frederick, MD",
+
+	"301 Hospital Drive, Glen Burnie, MD",
+
+	"444 North Main Street, Akron, OH",
+
+	"2001 Medical Parkway, Annapolis, MD",
+
+	"500 Martha Jefferson Drive, Charlottesville, VA",
+
+	"1761 Beall Avenue, Wooster, OH",
+
+	"200 N San Jacinto Street, Whitney, TX",
+
+	"225 E Jackson, Jonesboro, AR",
+
+	"22 S Greene Street, Baltimore, MD",
+
+	"47 South 4 Street, Rolling Fork, MS",
+
+	"1305 Crowley Rayne Highway, Crowley, LA",
+
+	"100 Hospital Road, Prince Frederic, MD",
+
+	"230 West Miller, Dilley, TX",
+
+	"118 N Hospital Drive, Abbeville, LA",
+
+	"22 Masonic Ave, Wallingford, CT",
+
+	"4200 Hospital Roada, Coal Township, PA",
+
+	"400 North Main Street, Warsaw, NY",
+
+	"630 South Main Street, Water Valley, MS",
+
+	"1201 7th Street SE, Decatur, AL",
+
+	"1320 Mercy Drive NW, Canton, OH",
+
+	"301 St. Paul Place, Baltimore, MD",
+
+	"100 S. Bliss Avenue, Tahlequah, OK",
+
+	"400 West Seventh Street, Frederick, MD",
+
+	"1276 Fulton Avenue, Bronx, NY",
+
+	"1401 West Locust, Stilwell, OK",
+
+	"400 North Main Street, Warsaw, NY",
+
+	"200 N. San Jacinto Street, Whitney, TX",
+
+	"500 Hospital Drive, Wetumpka, AL",
+
+	"800 West 9th Street, Jasper, IN",
+
+	"659 Boulevard, Dover, OH",
+
+	"Highway 10 at Detroit Street, Danville, AR");
+
+
+
+
+
+var DRGlist = Array(
+
+" EXTRACRANIAL PROCEDURES W/O CC/MCC",
+
+" DEGENERATIVE NERVOUS SYSTEM DISORDERS W/O MCC",
+
+" INTRACRANIAL HEMORRHAGE OR CEREBRAL INFARCTION W MCC",
+
+" INTRACRANIAL HEMORRHAGE OR CEREBRAL INFARCTION W CC",
+
+" INTRACRANIAL HEMORRHAGE OR CEREBRAL INFARCTION W/O CC/MCC",
+
+" TRANSIENT ISCHEMIA",
+
+" CRANIAL & PERIPHERAL NERVE DISORDERS W/O MCC",
+
+" SEIZURES W/O MCC",
+
+" DYSEQUILIBRIUM",
+
+" PULMONARY EMBOLISM W/O MCC",
+
+" RESPIRATORY INFECTIONS & INFLAMMATIONS W MCC",
+
+" RESPIRATORY INFECTIONS & INFLAMMATIONS W CC",
+
+" PULMONARY EDEMA & RESPIRATORY FAILURE",
+
+" CHRONIC OBSTRUCTIVE PULMONARY DISEASE W MCC",
+
+" CHRONIC OBSTRUCTIVE PULMONARY DISEASE W CC",
+
+" CHRONIC OBSTRUCTIVE PULMONARY DISEASE W/O CC/MCC",
+
+" SIMPLE PNEUMONIA & PLEURISY W MCC",
+
+" SIMPLE PNEUMONIA & PLEURISY W CC",
+
+" SIMPLE PNEUMONIA & PLEURISY W/O CC/MCC",
+
+" BRONCHITIS & ASTHMA W CC/MCC",
+
+" BRONCHITIS & ASTHMA W/O CC/MCC",
+
+" RESPIRATORY SYSTEM DIAGNOSIS W VENTILATOR SUPPORT 96+ HOURS",
+
+" RESPIRATORY SYSTEM DIAGNOSIS W VENTILATOR SUPPORT <96 HOURS",
+
+" MAJOR CARDIOVASC PROCEDURES W/O MCC",
+
+" PERMANENT CARDIAC PACEMAKER IMPLANT W CC",
+
+" PERMANENT CARDIAC PACEMAKER IMPLANT W/O CC/MCC",
+
+" PERC CARDIOVASC PROC W DRUG",
+
+" PERC CARDIOVASC PROC W DRUG",
+
+" PERC CARDIOVASC PROC W NON",
+
+" PERC CARDIOVASC PROC W/O CORONARY ARTERY STENT W/O MCC",
+
+" OTHER VASCULAR PROCEDURES W MCC",
+
+" OTHER VASCULAR PROCEDURES W CC",
+
+" OTHER VASCULAR PROCEDURES W/O CC/MCC",
+
+" ACUTE MYOCARDIAL INFARCTION, DISCHARGED ALIVE W MCC",
+
+" ACUTE MYOCARDIAL INFARCTION, DISCHARGED ALIVE W CC",
+
+" ACUTE MYOCARDIAL INFARCTION, DISCHARGED ALIVE W/O CC/MCC",
+
+" CIRCULATORY DISORDERS EXCEPT AMI, W CARD CATH W MCC",
+
+" CIRCULATORY DISORDERS EXCEPT AMI, W CARD CATH W/O MCC",
+
+" HEART FAILURE & SHOCK W MCC",
+
+" HEART FAILURE & SHOCK W CC",
+
+" HEART FAILURE & SHOCK W/O CC/MCC",
+
+" PERIPHERAL VASCULAR DISORDERS W CC",
+
+" PERIPHERAL VASCULAR DISORDERS W/O CC/MCC",
+
+" ATHEROSCLEROSIS W/O MCC",
+
+" HYPERTENSION W/O MCC",
+
+" CARDIAC ARRHYTHMIA & CONDUCTION DISORDERS W MCC",
+
+" CARDIAC ARRHYTHMIA & CONDUCTION DISORDERS W CC",
+
+" CARDIAC ARRHYTHMIA & CONDUCTION DISORDERS W/O CC/MCC",
+
+" SYNCOPE & COLLAPSE",
+
+" CHEST PAIN",
+
+" OTHER CIRCULATORY SYSTEM DIAGNOSES W MCC",
+
+" OTHER CIRCULATORY SYSTEM DIAGNOSES W CC",
+
+" MAJOR SMALL & LARGE BOWEL PROCEDURES W MCC",
+
+" MAJOR SMALL & LARGE BOWEL PROCEDURES W CC",
+
+" MAJOR GASTROINTESTINAL DISORDERS & PERITONEAL INFECTIONS W CC",
+
+" G.I. HEMORRHAGE W MCC",
+
+" G.I. HEMORRHAGE W CC",
+
+" G.I. HEMORRHAGE W/O CC/MCC",
+
+" G.I. OBSTRUCTION W CC",
+
+" G.I. OBSTRUCTION W/O CC/MCC",
+
+" ESOPHAGITIS, GASTROENT & MISC DIGEST DISORDERS W MCC",
+
+" ESOPHAGITIS, GASTROENT & MISC DIGEST DISORDERS W/O MCC",
+
+" OTHER DIGESTIVE SYSTEM DIAGNOSES W CC",
+
+" LAPAROSCOPIC CHOLECYSTECTOMY W/O C.D.E. W CC",
+
+" LAPAROSCOPIC CHOLECYSTECTOMY W/O C.D.E. W/O CC/MCC",
+
+" DISORDERS OF PANCREAS EXCEPT MALIGNANCY W CC",
+
+" SPINAL FUSION EXCEPT CERVICAL W/O MCC",
+
+" MAJOR JOINT REPLACEMENT OR REATTACHMENT OF LOWER EXTREMITY W MCC",
+
+" MAJOR JOINT REPLACEMENT OR REATTACHMENT OF LOWER EXTREMITY W/O MCC",
+
+" CERVICAL SPINAL FUSION W/O CC/MCC",
+
+" HIP & FEMUR PROCEDURES EXCEPT MAJOR JOINT W MCC",
+
+" HIP & FEMUR PROCEDURES EXCEPT MAJOR JOINT W CC",
+
+" HIP & FEMUR PROCEDURES EXCEPT MAJOR JOINT W/O CC/MCC",
+
+" BACK & NECK PROC EXC SPINAL FUSION W/O CC/MCC",
+
+" FRACTURES OF HIP & PELVIS W/O MCC",
+
+" MEDICAL BACK PROBLEMS W/O MCC",
+
+" FX, SPRN, STRN & DISL EXCEPT FEMUR, HIP, PELVIS & THIGH W/O MCC",
+
+" CELLULITIS W MCC",
+
+" CELLULITIS W/O MCC",
+
+" DIABETES W CC",
+
+" MISC DISORDERS OF NUTRITION,METABOLISM,FLUIDS/ELECTROLYTES W MCC",
+
+" MISC DISORDERS OF NUTRITION,METABOLISM,FLUIDS/ELECTROLYTES W/O MCC",
+
+" RENAL FAILURE W MCC",
+
+" RENAL FAILURE W CC",
+
+" RENAL FAILURE W/O CC/MCC",
+
+" KIDNEY & URINARY TRACT INFECTIONS W MCC",
+
+" KIDNEY & URINARY TRACT INFECTIONS W/O MCC",
+
+" OTHER KIDNEY & URINARY TRACT DIAGNOSES W MCC",
+
+" OTHER KIDNEY & URINARY TRACT DIAGNOSES W CC",
+
+" RED BLOOD CELL DISORDERS W MCC",
+
+" RED BLOOD CELL DISORDERS W/O MCC",
+
+" INFECTIOUS & PARASITIC DISEASES W O.R. PROCEDURE W MCC",
+
+" SEPTICEMIA OR SEVERE SEPSIS W MV 96+ HOURS",
+
+" SEPTICEMIA OR SEVERE SEPSIS W/O MV 96+ HOURS W MCC",
+
+" SEPTICEMIA OR SEVERE SEPSIS W/O MV 96+ HOURS W/O MCC",
+
+" PSYCHOSES",
+
+" ALCOHOL/DRUG ABUSE OR DEPENDENCE W/O REHABILITATION THERAPY W/O MCC",
+
+" POISONING & TOXIC EFFECTS OF DRUGS W MCC",
+
+" POISONING & TOXIC EFFECTS OF DRUGS W/O MCC",
+
+" SIGNS & SYMPTOMS W/O MCC");
+
+
+
+var DRGmin = Array(
+
+"$5981.05",
+
+"$5617.93",
+
+"$9539.08",
+
+"$5222.5",
+
+"$5391.81",
+
+"$4388",
+
+"$5695.53",
+
+"$4735.21",
+
+"$3981.75",
+
+"$6106.9",
+
+"$6984.11",
+
+"$5794.72",
+
+"$7199.86",
+
+"$4744.46",
+
+"$4616.87",
+
+"$3133.58",
+
+"$6680.76",
+
+"$5092.6",
+
+"$4078.35",
+
+"$3944.1",
+
+"$3113.76",
+
+"$29636.63",
+
+"$12339.08",
+
+"$22460.58",
+
+"$19747.27",
+
+"$15128.13",
+
+"$21135.83",
+
+"$11537.68",
+
+"$11095.79",
+
+"$13313.5",
+
+"$14816.33",
+
+"$14151.65",
+
+"$9558.53",
+
+"$7062.72",
+
+"$5926.33",
+
+"$4447.45",
+
+"$9269.57",
+
+"$6561.04",
+
+"$7303.81",
+
+"$4622.8",
+
+"$3334",
+
+"$5261.27",
+
+"$4648.04",
+
+"$3069.66",
+
+"$2956.5",
+
+"$8018.89",
+
+"$4067.41",
+
+"$2701.72",
+
+"$3806.42",
+
+"$2459.4",
+
+"$9388.52",
+
+"$6223.28",
+
+"$31804.33",
+
+"$15809.46",
+
+"$5176.27",
+
+"$9732.4",
+
+"$6950.22",
+
+"$4564.05",
+
+"$5007.63",
+
+"$4039.25",
+
+"$7789.73",
+
+"$2521.37",
+
+"$6133.97",
+
+"$11689.46",
+
+"$6750",
+
+"$6539.72",
+
+"$19186.07",
+
+"$20097.53",
+
+"$5303.6",
+
+"$12581.33",
+
+"$17844.41",
+
+"$13425.36",
+
+"$11008.41",
+
+"$6701.43",
+
+"$3986.46",
+
+"$4371.76",
+
+"$4514.66",
+
+"$7816.28",
+
+"$2795.81",
+
+"$4190.9",
+
+"$6688.63",
+
+"$2995.61",
+
+"$8132.75",
+
+"$5173.21",
+
+"$4457.58",
+
+"$6223.72",
+
+"$3637.92",
+
+"$10005.61",
+
+"$6432.36",
+
+"$6501.25",
+
+"$3534",
+
+"$28160.46",
+
+"$37729.89",
+
+"$6921",
+
+"$5419.84",
+
+"$2749.94",
+
+"$2536.69",
+
+"$6809.83",
+
+"$3956.46",
+
+"$3484.86");
+
+
+
+
+
+var DRGmax = Array(
+
+"$146892",
+
+"$148128.43",
+
+"$234912.7",
+
+"$162922.5",
+
+"$117831.14",
+
+"$120040.36",
+
+"$101758.85",
+
+"$109140.22",
+
+"$77700.5",
+
+"$129078.14",
+
+"$232552.37",
+
+"$183989.9",
+
+"$169831.95",
+
+"$140771.69",
+
+"$112726.64",
+
+"$99689.64",
+
+"$175607.92",
+
+"$124050.68",
+
+"$88520.52",
+
+"$124430.09",
+
+"$73108.66",
+
+"$929118.9",
+
+"$275926.15",
+
+"$303920.57",
+
+"$211534.07",
+
+"$167628.42",
+
+"$331808.97",
+
+"$223904.87",
+
+"$223805.28",
+
+"$203522.36",
+
+"$389476.27",
+
+"$286988",
+
+"$146856.11",
+
+"$210229.3",
+
+"$137483.93",
+
+"$107981.25",
+
+"$351798.44",
+
+"$150412.65",
+
+"$173249.72",
+
+"$121079.52",
+
+"$92057.42",
+
+"$121924.91",
+
+"$90531",
+
+"$69197.16",
+
+"$68961.18",
+
+"$144969.93",
+
+"$106533.25",
+
+"$83256.97",
+
+"$107698.75",
+
+"$81083",
+
+"$232290.15",
+
+"$116163.94",
+
+"$557900.75",
+
+"$307161.91",
+
+"$150625.33",
+
+"$197579.09",
+
+"$127678.3",
+
+"$65729.27",
+
+"$151705.52",
+
+"$80514.88",
+
+"$138368.1",
+
+"$96216.73",
+
+"$103155.6",
+
+"$173771.57",
+
+"$140449.18",
+
+"$132209.33",
+
+"$471120.85",
+
+"$321918.21",
+
+"$223373.06",
+
+"$219272.63",
+
+"$324133.76",
+
+"$196944.26",
+
+"$190217.09",
+
+"$136598.88",
+
+"$64015.93",
+
+"$129247.56",
+
+"$83402.58",
+
+"$200216.92",
+
+"$105756.27",
+
+"$130689.7",
+
+"$144497.2",
+
+"$91222.2",
+
+"$241653.76",
+
+"$111516.85",
+
+"$67709.17",
+
+"$132568.58",
+
+"$91695",
+
+"$195412.14",
+
+"$106275.1",
+
+"$141750.9",
+
+"$166362.52",
+
+"$576296",
+
+"$637377.71",
+
+"$216438.28",
+
+"$137212.85",
+
+"$144522.66",
+
+"$79932.53",
+
+"$236455.9",
+
+"$79965.72",
+
+"$84846.5");
+
+
+
+var DRGavg = Array(
+
+"$28522.4",
+
+"$24792.93",
+
+"$50511.48",
+
+"$30776.07",
+
+"$23864.61",
+
+"$21830.05",
+
+"$25325.32",
+
+"$22428.1",
+
+"$18903.6",
+
+"$26417.07",
+
+"$51383.27",
+
+"$36088.79",
+
+"$31953.14",
+
+"$30161.78",
+
+"$24320.14",
+
+"$18120.84",
+
+"$37685.29",
+
+"$25348.91",
+
+"$18077.54",
+
+"$23776.08",
+
+"$17131.74",
+
+"$143768.96",
+
+"$62710.19",
+
+"$83737.07",
+
+"$67968.68",
+
+"$53134.33",
+
+"$93363.31",
+
+"$61985.03",
+
+"$55978.31",
+
+"$65054.38",
+
+"$84391.35",
+
+"$68656.56",
+
+"$46399.25",
+
+"$46373.31",
+
+"$30496.93",
+
+"$23000.15",
+
+"$61115.13",
+
+"$34000.48",
+
+"$38219.62",
+
+"$25113.9",
+
+"$17383.2",
+
+"$24634.84",
+
+"$17278.23",
+
+"$16473.45",
+
+"$17734.8",
+
+"$31974.7",
+
+"$21461.88",
+
+"$15086.52",
+
+"$20541.31",
+
+"$16927.67",
+
+"$49438.29",
+
+"$26715.91",
+
+"$135584.77",
+
+"$65481.84",
+
+"$30768.28",
+
+"$46459.45",
+
+"$26058.98",
+
+"$18974.56",
+
+"$24673.24",
+
+"$17488.9",
+
+"$32610.73",
+
+"$20321.54",
+
+"$26978.33",
+
+"$48091.44",
+
+"$34635.74",
+
+"$27012.17",
+
+"$92884.27",
+
+"$79518",
+
+"$50105.26",
+
+"$52934.92",
+
+"$74927.73",
+
+"$48304.42",
+
+"$39806.1",
+
+"$29233.28",
+
+"$17837.78",
+
+"$22808.39",
+
+"$19464.26",
+
+"$37974.39",
+
+"$20272.37",
+
+"$21892.23",
+
+"$28861.66",
+
+"$17836.17",
+
+"$40258.7",
+
+"$25354.29",
+
+"$16954.12",
+
+"$29464.18",
+
+"$19865.56",
+
+"$42212.74",
+
+"$28173.04",
+
+"$34376.15",
+
+"$20855.35",
+
+"$141995.08",
+
+"$163325.92",
+
+"$49418.6",
+
+"$28323.1",
+
+"$18761.07",
+
+"$14383.19",
+
+"$39321.72",
+
+"$17280.81",
+
+"$18739.86");
+
+		</script>
+
+    </body>
+
+</html>
